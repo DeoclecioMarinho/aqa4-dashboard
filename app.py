@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -12,6 +12,7 @@ import streamlit as st
 
 from modulos import PRACTICE, TEST, PROFILES, analysis, associate, coverage, profiles, quality, roster
 
+START_DATE = date(2026, 11, 10)
 SERVER = "https://kf.kobo.ucp-pch.org"
 FORMS = {
     "Avaliação principal": ("am5akLzG7uLVbt5S4JGhbS", "aluno_id", "percentagem"),
@@ -120,10 +121,12 @@ def main():
     pages = ["Visão geral", "Cobertura da amostra", "Prática", "Avaliação principal", "Questionários", "Qualidade"]
     page = st.sidebar.radio("Módulos", pages)
     update = st.sidebar.button("Atualizar do Kobo", type="primary")
-    if update or "snapshot" not in st.session_state:
+    snapshot = st.session_state.get("snapshot")
+    if update or snapshot is None or not set(COLUMNS).issubset(snapshot[0].columns):
         with st.spinner("A consultar os quatro projetos…"):
-            st.session_state.snapshot = refresh(token)
-    records, errors, timestamp = st.session_state.snapshot
+            snapshot = refresh(token)
+            st.session_state.snapshot = snapshot
+    records, errors, timestamp = snapshot
     st.caption(f"KoboToolbox · Última consulta em Bissau {timestamp:%d/%m/%Y às %H:%M}")
     for form, error in errors.items():
         st.warning(f"{form} · {error}")
@@ -137,6 +140,12 @@ def main():
         st.error(f"Não foi possível aplicar a lista de códigos. {error}")
         st.stop()
     data = associate(prepare(records), plan)
+    phase = st.sidebar.radio("Fase da recolha", ["Recolha oficial", "Testes anteriores", "Todas as submissões"])
+    if phase == "Recolha oficial":
+        data = data[data["Dia"].ge(START_DATE)]
+    elif phase == "Testes anteriores":
+        data = data[data["Dia"].lt(START_DATE)]
+    st.caption("Início da recolha oficial · 10/11/2026. A fase usa a data de receção no Kobo.")
     regions = st.sidebar.multiselect("Unidade de amostragem", sorted(set(plan["regiao"]) | {"Por confirmar"}))
     if regions:
         plan = plan[plan["regiao"].isin(regions)]
