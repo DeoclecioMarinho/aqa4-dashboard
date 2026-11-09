@@ -88,7 +88,7 @@ def latest_student_records(data):
 
 
 def analysis(data, form, error):
-    st.header(form)
+    st.subheader("Resumo dos resultados")
     if error:
         st.warning(error)
         return
@@ -176,7 +176,7 @@ def profiles(data, labels):
             st.bar_chart(display.value_counts().rename("Respostas"))
 
 
-def quality(data, forms, errors):
+def quality(data, forms, errors, registry):
     rows = []
     for form, (_, student_field, _) in forms.items():
         if form in errors:
@@ -191,4 +191,11 @@ def quality(data, forms, errors):
     pending = data[data["Amostra"].isna() & data["Escola"].ne("")]
     if not pending.empty:
         st.subheader("Códigos por reconciliar")
-        st.dataframe(pending.groupby(["Escola", "Instrumento"]).size().rename("Submissões").reset_index(), hide_index=True)
+        pending = pending.assign(Data=pending["Dia"].astype(str).replace("NaT", "Sem data"))
+        review = pending.groupby(["Data", "Escola", "Instrumento"]).size().rename("Submissões").reset_index()
+        review["Escola na base"] = review["Escola"].map(lambda code: registry.get(code, {}).get("Escola na base", "—"))
+        review["Motivo"] = review["Escola"].map(lambda code: "Código fora da base" if code not in registry else
+                                                "Código da amostra por reconciliar" if registry[code]["Selecionada"] else
+                                                "Escola fora da seleção")
+        st.dataframe(review.rename(columns={"Escola": "Código no Kobo"}), hide_index=True)
+        st.caption("Os códigos são comparados como texto. Zeros à esquerda podem indicar um código diferente.")

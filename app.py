@@ -10,6 +10,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 import pandas as pd
 import streamlit as st
 
+from interface import navigation, objective, filter_analysis
 from modulos import PRACTICE, TEST, PROFILES, analysis, associate, coverage, profiles, quality, roster
 
 SERVER = "https://kf.kobo.ucp-pch.org"
@@ -108,9 +109,7 @@ def prepare(records):
 
 def main():
     st.set_page_config(page_title="AQA4 | Seguimento do piloto", page_icon="📊", layout="wide")
-    st.image(str(ROOT / "logo.png"), width=700)
-    st.caption("PROJETO DE CAPITAL HUMANO · MINISTÉRIO DA EDUCAÇÃO NACIONAL")
-    st.title("Seguimento do piloto AQA4")
+    page, update = navigation(ROOT)
     token = os.environ.get("KOBO_API_TOKEN")
     if not token:
         try:
@@ -118,9 +117,6 @@ def main():
         except (FileNotFoundError, KeyError):
             st.error("Configura KOBO_API_TOKEN para ligar ao Kobo.")
             st.stop()
-    pages = ["Visão geral", "Cobertura da amostra", "Prática", "Avaliação principal", "Questionários", "Qualidade"]
-    page = st.sidebar.radio("Módulos", pages)
-    update = st.sidebar.button("Atualizar do Kobo", type="primary")
     snapshot = st.session_state.get("snapshot_painel")
     if update or snapshot is None or not set(COLUMNS).issubset(snapshot[0].columns):
         with st.spinner("A consultar os quatro projetos…"):
@@ -130,33 +126,34 @@ def main():
     st.caption(f"KoboToolbox · Início do piloto em 09/11/2026 · Última consulta em Bissau {timestamp:%d/%m/%Y às %H:%M}")
     for form, error in errors.items():
         st.warning(f"{form} · {error}")
-    with st.sidebar.expander("Códigos da amostra"):
-        st.download_button("Descarregar lista de escolas", (ROOT / "escolas_aqa4.csv").read_bytes(),
-                           "escolas_aqa4.csv", "text/csv")
-        uploaded = st.file_uploader("Carregar lista com códigos Kobo", type="csv")
+    objective(page)
+    uploaded = st.session_state.get("aqa4_codigo_csv")
+    if page == "Qualidade":
+        with st.expander("Reconciliar códigos da amostra"):
+            st.download_button("Descarregar lista de escolas", (ROOT / "escolas_aqa4.csv").read_bytes(),
+                               "escolas_aqa4.csv", "text/csv")
+            candidate = st.file_uploader("Carregar lista com códigos Kobo", type="csv")
+            if candidate and st.button("Aplicar códigos"):
+                try:
+                    roster(ROOT / "escolas_aqa4.csv", candidate)
+                except (ValueError, KeyError, UnicodeError) as error:
+                    st.error(str(error))
+                else:
+                    uploaded = candidate
+                    st.session_state.aqa4_codigo_csv = candidate
+                    st.success("Códigos atualizados nesta sessão.")
+            if uploaded and st.button("Restaurar IDs da base consolidada"):
+                st.session_state.pop("aqa4_codigo_csv", None)
+                uploaded = None
     try:
         plan = roster(ROOT / "escolas_aqa4.csv", uploaded)
     except (ValueError, KeyError, UnicodeError) as error:
         st.error(f"Não foi possível aplicar a lista de códigos. {error}")
         st.stop()
     data = associate(prepare(records), plan)
-    st.sidebar.divider()
-    st.sidebar.caption("Filtros de consulta")
-    regions = st.sidebar.multiselect("Unidade de amostragem", sorted(set(plan["regiao"]) | {"Por confirmar"}))
-    if regions:
-        plan = plan[plan["regiao"].isin(regions)]
-        data = data[data["Região"].isin(regions)]
-    schools = st.sidebar.multiselect("Escola", sorted(set(plan["escola"]) | set(data["Escola exibida"])))
-    if schools:
-        plan = plan[plan["escola"].isin(schools)]
-        data = data[data["Escola exibida"].isin(schools)]
-    days = sorted(data["Dia"].dropna().unique())
-    if days:
-        period = st.sidebar.date_input("Período de envio", (days[0], days[-1]), min_value=days[0], max_value=days[-1])
-        if len(period) == 2 and tuple(period) != (days[0], days[-1]):
-            data = data[data["Dia"].between(*period)]
+    data, plan = filter_analysis(data, plan, page)
     if page == "Visão geral":
-        st.header(page)
+        st.subheader("Submissões por instrumento")
         for form, col in zip(FORMS, st.columns(4)):
             col.metric(form, "Indisponível" if form in errors else int(data["Instrumento"].eq(form).sum()))
         total = len(data)
@@ -189,9 +186,9 @@ def main():
     elif page == "Questionários":
         profiles(data, json.loads((ROOT / "rotulos.json").read_text(encoding="utf-8")))
     else:
-        quality(data, FORMS, errors)
+        quality(data, FORMS, errors, json.loads((ROOT / "referencia_escolas.json").read_text(encoding="utf-8")))
     with st.expander("Critérios de leitura"):
-        st.caption("A vista inicial inclui todas as submissões disponíveis, incluindo testes. Para analisar um período, usa o filtro de data.")
+        st.caption("A vista inicial inclui todas as submissões disponíveis, incluindo testes. Nos módulos de análise, o período pode ser alterado no filtro local.")
         st.write("Painel descritivo do piloto. Os resultados da prática e do teste têm escalas e finalidades diferentes. A amostra corresponde às 20 escolas da lista recebida. O cruzamento usa códigos com zeros à esquerda preservados. Os resultados representam os registos recebidos no período.")
 
 

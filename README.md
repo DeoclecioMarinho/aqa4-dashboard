@@ -33,3 +33,7 @@ Os CSV descarregados são resumos agregados. O pacote não inclui credenciais ou
 ## Período de consulta
 
 O piloto começa em 09/11/2026. A vista inicial mostra todos os registos disponíveis no Kobo, incluindo testes. Usar o filtro de data para restringir o período.
+
+## Navegação e filtros
+
+O menu lateral contém os módulos e o botão de atualização do Kobo. Os filtros de região, escola e data ficam dentro de cada análise. Em Qualidade, a tabela distingue códigos fora da base de códigos de escolas conhecidas fora da seleção, a partir de referencia_escolas.json.
