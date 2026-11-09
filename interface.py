@@ -11,6 +11,9 @@ DESCRIPTIONS = {
     "Qualidade": "Identifica códigos em falta, submissões repetidas e registos que precisam de ser reconciliados com a amostra.",
 }
 
+ICONS = {"Visão geral": "▦", "Cobertura da amostra": "◎", "Prática": "✎",
+         "Avaliação principal": "▥", "Questionários": "☷", "Qualidade": "✓"}
+
 STYLE = """
 <style>
 [data-testid="stSidebar"] {border-right:1px solid #dbe8f2;}
@@ -39,7 +42,7 @@ STYLE = """
 [data-testid="stMetricValue"] {font-size:clamp(1.35rem, 2.1vw, 2rem); color:#092e51; font-weight:700;}
 .aqa-objective {
   border:1px solid #dcecf8; border-left:4px solid #0879b7;
-  background:#edf6fb; color:#143b59; border-radius:.75rem; padding:.9rem 1rem;
+  background:#edf6fb; color:#143b59; border-radius:.75rem; padding:.9rem 1rem; margin-bottom:1.4rem;
 }
 .aqa-objective strong {display:block; margin-bottom:.2rem;}
 @media(max-width:700px) {
@@ -56,7 +59,8 @@ def navigation(root: Path):
         st.markdown("**AQA4 · PCH**")
         st.caption("Painel de acompanhamento")
         st.divider()
-        page = st.radio("Módulos", list(DESCRIPTIONS), label_visibility="collapsed")
+        page = st.radio("Módulos", list(DESCRIPTIONS), format_func=lambda name: f"{ICONS[name]}  {name}",
+                        label_visibility="collapsed")
         st.divider()
         update = st.button("Atualizar do Kobo", type="primary")
     st.title("Seguimento do piloto AQA4" if page == "Visão geral" else page)
@@ -71,6 +75,7 @@ def objective(page):
 def filter_analysis(data, plan, page):
     if page == "Visão geral":
         return data, plan
+    st.divider()
     with st.expander("Filtrar esta análise", expanded=False):
         region_col, school_col, date_col = st.columns(3)
         regions = region_col.multiselect("Região / unidade", sorted(set(plan["regiao"]) | set(data["Região"])), key=f"r_{page}")

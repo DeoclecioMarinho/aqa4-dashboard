@@ -107,8 +107,19 @@ def prepare(records):
     return data
 
 
+def load_school_reference(path):
+    try:
+        reference = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError):
+        return {}
+    if not isinstance(reference, dict):
+        return {}
+    return {key: value for key, value in reference.items()
+            if isinstance(value, dict) and isinstance(value.get("Selecionada"), bool)}
+
+
 def main():
-    st.set_page_config(page_title="AQA4 | Seguimento do piloto", page_icon="📊", layout="wide")
+    st.set_page_config(page_title="AQA4 | Seguimento do piloto", page_icon=str(ROOT / "logo.png"), layout="wide")
     page, update = navigation(ROOT)
     token = os.environ.get("KOBO_API_TOKEN")
     if not token:
@@ -186,7 +197,10 @@ def main():
     elif page == "Questionários":
         profiles(data, json.loads((ROOT / "rotulos.json").read_text(encoding="utf-8")))
     else:
-        quality(data, FORMS, errors, json.loads((ROOT / "referencia_escolas.json").read_text(encoding="utf-8")))
+        registry = load_school_reference(ROOT / "referencia_escolas.json")
+        if not registry:
+            st.warning("A referência das escolas está indisponível. Os códigos a reconciliar continuam visíveis.")
+        quality(data, FORMS, errors, registry)
     with st.expander("Critérios de leitura"):
         st.caption("A vista inicial inclui todas as submissões disponíveis, incluindo testes. Nos módulos de análise, o período pode ser alterado no filtro local.")
         st.write("Painel descritivo do piloto. Os resultados da prática e do teste têm escalas e finalidades diferentes. A amostra corresponde às 20 escolas da lista recebida. O cruzamento usa códigos com zeros à esquerda preservados. Os resultados representam os registos recebidos no período.")

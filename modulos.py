@@ -194,7 +194,8 @@ def quality(data, forms, errors, registry):
         pending = pending.assign(Data=pending["Dia"].astype(str).replace("NaT", "Sem data"))
         review = pending.groupby(["Data", "Escola", "Instrumento"]).size().rename("Submissões").reset_index()
         review["Escola na base"] = review["Escola"].map(lambda code: registry.get(code, {}).get("Escola na base", "—"))
-        review["Motivo"] = review["Escola"].map(lambda code: "Código fora da base" if code not in registry else
+        review["Motivo"] = review["Escola"].map(lambda code: "Referência indisponível" if not registry else
+                                                "Código fora da base" if code not in registry else
                                                 "Código da amostra por reconciliar" if registry[code]["Selecionada"] else
                                                 "Escola fora da seleção")
         st.dataframe(review.rename(columns={"Escola": "Código no Kobo"}), hide_index=True)
