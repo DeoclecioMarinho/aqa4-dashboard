@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -12,7 +12,6 @@ import streamlit as st
 
 from modulos import PRACTICE, TEST, PROFILES, analysis, associate, coverage, profiles, quality, roster
 
-START_DATE = date(2026, 11, 10)
 SERVER = "https://kf.kobo.ucp-pch.org"
 FORMS = {
     "Avaliação principal": ("am5akLzG7uLVbt5S4JGhbS", "aluno_id", "percentagem"),
@@ -109,7 +108,8 @@ def prepare(records):
 
 def main():
     st.set_page_config(page_title="AQA4 | Seguimento do piloto", page_icon="📊", layout="wide")
-    st.image(str(ROOT / "logo.png"), width=420)
+    st.image(str(ROOT / "logo.png"), width=700)
+    st.caption("PROJETO DE CAPITAL HUMANO · MINISTÉRIO DA EDUCAÇÃO NACIONAL")
     st.title("Seguimento do piloto AQA4")
     token = os.environ.get("KOBO_API_TOKEN")
     if not token:
@@ -121,13 +121,13 @@ def main():
     pages = ["Visão geral", "Cobertura da amostra", "Prática", "Avaliação principal", "Questionários", "Qualidade"]
     page = st.sidebar.radio("Módulos", pages)
     update = st.sidebar.button("Atualizar do Kobo", type="primary")
-    snapshot = st.session_state.get("snapshot")
+    snapshot = st.session_state.get("snapshot_painel")
     if update or snapshot is None or not set(COLUMNS).issubset(snapshot[0].columns):
         with st.spinner("A consultar os quatro projetos…"):
             snapshot = refresh(token)
-            st.session_state.snapshot = snapshot
+            st.session_state.snapshot_painel = snapshot
     records, errors, timestamp = snapshot
-    st.caption(f"KoboToolbox · Última consulta em Bissau {timestamp:%d/%m/%Y às %H:%M}")
+    st.caption(f"KoboToolbox · Início do piloto em 09/11/2026 · Última consulta em Bissau {timestamp:%d/%m/%Y às %H:%M}")
     for form, error in errors.items():
         st.warning(f"{form} · {error}")
     with st.sidebar.expander("Códigos da amostra"):
@@ -140,12 +140,8 @@ def main():
         st.error(f"Não foi possível aplicar a lista de códigos. {error}")
         st.stop()
     data = associate(prepare(records), plan)
-    phase = st.sidebar.radio("Fase da recolha", ["Recolha oficial", "Testes anteriores", "Todas as submissões"])
-    if phase == "Recolha oficial":
-        data = data[data["Dia"].ge(START_DATE)]
-    elif phase == "Testes anteriores":
-        data = data[data["Dia"].lt(START_DATE)]
-    st.caption("Início da recolha oficial · 10/11/2026. A fase usa a data de receção no Kobo.")
+    st.sidebar.divider()
+    st.sidebar.caption("Filtros de consulta")
     regions = st.sidebar.multiselect("Unidade de amostragem", sorted(set(plan["regiao"]) | {"Por confirmar"}))
     if regions:
         plan = plan[plan["regiao"].isin(regions)]
@@ -163,6 +159,14 @@ def main():
         st.header(page)
         for form, col in zip(FORMS, st.columns(4)):
             col.metric(form, "Indisponível" if form in errors else int(data["Instrumento"].eq(form).sum()))
+        total = len(data)
+        schools_seen = data["Amostra"].nunique()
+        today_count = int(data["Dia"].eq(datetime.now(timezone.utc).date()).sum())
+        a, b, c = st.columns(3)
+        a.metric("Submissões recebidas", total, help="Total dos quatro instrumentos nos filtros selecionados.")
+        b.metric("Recebidas hoje", today_count)
+        c.metric("Escolas da amostra com recolha", f"{schools_seen} / {len(plan)}")
+        st.divider()
         trend = data.dropna(subset=["Dia"]).groupby(["Dia", "Instrumento"]).size().unstack(fill_value=0)
         if not trend.empty:
             st.subheader("Submissões por dia")
@@ -187,6 +191,7 @@ def main():
     else:
         quality(data, FORMS, errors)
     with st.expander("Critérios de leitura"):
+        st.caption("A vista inicial inclui todas as submissões disponíveis, incluindo testes. Para analisar um período, usa o filtro de data.")
         st.write("Painel descritivo do piloto. Os resultados da prática e do teste têm escalas e finalidades diferentes. A amostra corresponde às 20 escolas da lista recebida. O cruzamento usa códigos com zeros à esquerda preservados. Os resultados representam os registos recebidos no período.")
 
 

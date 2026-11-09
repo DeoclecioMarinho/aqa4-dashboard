@@ -29,3 +29,7 @@ Os IDs em escolas_aqa4.csv vêm da coluna id da aba Base consolidada da lista of
 As contagens de cobertura mostram todas as submissões recebidas. O cruzamento de alunos usa o par código da escola e código do aluno. Nos resultados de prática e teste, conta a última submissão de cada par no período. Registos sem os dois códigos ficam separados. O indicador de média usa apenas pontuações válidas. Os itens sem classificação ficam fora do denominador por item. As omissões de itens classificáveis entram no denominador. As médias de prática e avaliação principal são apresentadas em módulos distintos.
 
 Os CSV descarregados são resumos agregados. O pacote não inclui credenciais ou submissões. A lista das escolas selecionadas faz parte do projeto. O ficheiro .streamlit/secrets.toml está excluído do Git.
+
+## Período de consulta
+
+O piloto começa em 09/11/2026. A vista inicial mostra todos os registos disponíveis no Kobo, incluindo testes. Usar o filtro de data para restringir o período.

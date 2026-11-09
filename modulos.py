@@ -92,13 +92,15 @@ def analysis(data, form, error):
     if error:
         st.warning(error)
         return
-    sample = latest_student_records(data[data["Instrumento"].eq(form)])
+    received = data[data["Instrumento"].eq(form)]
+    sample = latest_student_records(received)
     valid = sample[sample["Pontuação"].between(0, 100)]
     a, b, c, d = st.columns(4)
     a.metric("Registos analisados", len(sample))
     b.metric("Com pontuação", len(valid))
     c.metric("Média de acertos", f"{valid['Pontuação'].mean():.1f}%" if len(valid) else "—")
     d.metric("Mediana", f"{valid['Pontuação'].median():.1f}%" if len(valid) else "—")
+    st.caption(f"{len(received)} submissões recebidas · {len(received) - len(sample)} repetições excluídas dos resultados.")
     st.caption("Por par escola–aluno, usa-se a última submissão no período selecionado. Registos sem os dois códigos são contados separadamente.")
     if sample.empty:
         st.info("Ainda não há submissões deste instrumento nos filtros selecionados.")
@@ -114,7 +116,10 @@ def analysis(data, form, error):
             scores = scores[n.gt(0) & scores.between(0, 100)]
             sections.append({"Secção": section, "N": len(scores), "Média (%)": round(scores.mean(), 1)})
         st.subheader("Resultados por secção")
-        st.dataframe(pd.DataFrame(sections), hide_index=True)
+        section_table = pd.DataFrame(sections)
+        st.dataframe(section_table, hide_index=True)
+        if section_table["Média (%)"].notna().any():
+            st.bar_chart(section_table.dropna(subset=["Média (%)"]), x="Secção", y="Média (%)", color="#006DB3")
     if not valid.empty:
         st.subheader("Distribuição das pontuações")
         bands = pd.cut(valid["Pontuação"], [-0.01, 25, 50, 75, 100], labels=["0–25", ">25–50", ">50–75", ">75–100"])
@@ -138,7 +143,17 @@ def analysis(data, form, error):
                       "Omissões": int((classified & ~answered).sum()),
                       "Sem classificação": len(sample) - n,
                       "Acertos (%)": round(100 * hits / n, 1) if n else None})
-    st.dataframe(pd.DataFrame(items), hide_index=True)
+    item_table = pd.DataFrame(items)
+    st.caption(f"{item_table['Classificáveis'].sum()} respostas classificáveis de {len(sample) * len(item_table)} posições possíveis · {item_table['Sem classificação'].sum()} sem classificação.")
+    item_valid = item_table[item_table["Classificáveis"].gt(0)]
+    if not item_valid.empty:
+        k1, k2, k3 = st.columns(3)
+        k1.metric("Acertos classificados", int(item_valid["Acertos"].sum()))
+        k2.metric("Erros classificados", int(item_valid["Erros"].sum()))
+        k3.metric("Omissões classificáveis", int(item_valid["Omissões"].sum()))
+        st.bar_chart(item_valid, x="Item", y="Acertos (%)", color="#087547")
+    st.dataframe(item_table, hide_index=True)
+    export_table("Descarregar análise por item", item_table, "aqa4_itens.csv")
     st.caption("O denominador por item inclui omissões classificáveis. Itens sem chave e registos sem correção ficam fora da taxa. As faixas do gráfico são descritivas.")
 
 
