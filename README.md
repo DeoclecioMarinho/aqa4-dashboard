@@ -1,28 +1,31 @@
-# Painel de seguimento AQA4
+# Dashboard de seguimento AQA4
 
-O painel lê os quatro projetos através da API v2 do Kobo do PCH. Usa o botão **Atualizar do Kobo** para consultar as submissões mais recentes.
+Painel em Streamlit com leitura direta dos quatro projetos do KoboToolbox do PCH.
 
-## Abrir no PC
+## Módulos
 
-Com Python 3.10 ou superior, abrir o terminal nesta pasta. Copiar .streamlit/secrets.example.toml para .streamlit/secrets.toml e preencher o token localmente. Depois executar:
+- **Visão geral** — submissões recebidas por instrumento e dia, e seguimento dos alunos nos três instrumentos individuais.
+- **Cobertura da amostra** — 20 escolas selecionadas em 10 unidades, com setor, ID, estado de recolha e descarga da tabela.
+- **Prática** — pontuação, completude, distribuição dos resultados e acertos, erros e omissões por item.
+- **Avaliação principal** — pontuação global, resultados por secção A, B e C, distribuição, resultados por escola e análise dos 40 itens.
+- **Questionários** — indicadores de perfil de alunos e professores com as designações do XLSForm.
+- **Qualidade** — códigos em falta, repetições e códigos Kobo sem associação à amostra.
+
+## Abrir
+
+Com Python 3.10 ou superior, executar:
 
 ```powershell
 python -m pip install -r requirements.txt
-python -m streamlit run app.py --server.address 127.0.0.1
+python -m streamlit run app.py
 ```
 
-Abrir http://localhost:8501 no navegador. O botão de atualização consulta os quatro projetos.
+Configurar KOBO_API_TOKEN como variável de ambiente ou copiar .streamlit/secrets.example.toml para .streamlit/secrets.toml e preencher a chave. No Streamlit Cloud, usar app.py como ficheiro principal e configurar o token nos segredos do serviço. Restringir o acesso à equipa autorizada. O painel é consultável no navegador do PC e do Android onde o alojamento estiver acessível.
 
-## Consultar no Android
+## Como interpretar
 
-Para acesso pela mesma rede Wi-Fi, iniciar com `--server.address 0.0.0.0` numa rede de confiança e abrir `http://IP_DO_PC:8501` no Android. O PC deve continuar ligado. Para acesso fora da rede, alojar o painel num servidor com HTTPS e autenticação.
+Os IDs em escolas_aqa4.csv vêm da coluna id da aba Base consolidada da lista oficial. O painel associa esse ID ao codigo_escola do Kobo, como texto. Quando o campo contém o nome completo da escola, é aceite uma correspondência por nome normalizado e único. O módulo Qualidade indica códigos ainda sem associação. Para reconciliar códigos diferentes dos IDs da lista, descarregar a lista no painel, ajustar os códigos confirmados e voltar a carregá-la. A lista carregada fica na sessão. Para torná-la a configuração padrão, substituir escolas_aqa4.csv.
 
-## Configuração e critérios
+As contagens de cobertura mostram todas as submissões recebidas. O cruzamento de alunos usa o par código da escola e código do aluno. Nos resultados de prática e teste, conta a última submissão de cada par no período. Registos sem os dois códigos ficam separados. O indicador de média usa apenas pontuações válidas. Os itens sem classificação ficam fora do denominador por item. As omissões de itens classificáveis entram no denominador. As médias de prática e avaliação principal são apresentadas em módulos distintos.
 
-O token é lido de `KOBO_API_TOKEN` ou de `.streamlit/secrets.toml`. Mantém esse ficheiro local e fora de partilhas e repositórios. A chave fornecida no chat deve ser substituída no Kobo e na configuração local.
-
-O cruzamento usa o código da escola e do aluno tal como foram registados, removendo espaços nas extremidades e preservando zeros iniciais. A região resulta dos questionários de alunos e professores. Códigos sem associação ou com regiões divergentes ficam em «Por confirmar». As escolas sem submissões poderão entrar no painel quando houver uma lista oficial de códigos e metas. As médias são calculadas por submissão com pontuação válida, incluindo submissões repetidas. O painel apresenta totais e dados por escola. Os nomes dos docentes e códigos dos alunos ficam fora das tabelas apresentadas.
-
-## Publicar o código no GitHub
-
-Extrair o ZIP e enviar o conteúdo desta pasta para o repositório. Incluir .gitignore e a pasta .streamlit com o ficheiro de exemplo. Usar app.py como ficheiro de entrada. Se alojar o painel, configurar KOBO_API_TOKEN nos segredos do serviço de alojamento e limitar o acesso ao painel à equipa autorizada. Publicar o código no GitHub e alojar a aplicação são passos separados.
+Os CSV descarregados são resumos agregados. O pacote não inclui credenciais ou submissões. A lista das escolas selecionadas faz parte do projeto. O ficheiro .streamlit/secrets.toml está excluído do Git.

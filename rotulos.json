@@ -1,0 +1,149 @@
+{
+  "Alunos": {
+    "sexo": {
+      "masculino": "Masculino",
+      "feminino": "Feminino",
+      "prefiro_nao_responder": "Prefiro não responder"
+    },
+    "regiao": {
+      "bissau": "Bissau",
+      "bafata": "Bafatá",
+      "biombo": "Biombo",
+      "bolama_bijagos": "Bolama/Bijagós",
+      "cacheu": "Cacheu",
+      "gabu": "Gabú",
+      "oio": "Oio",
+      "quinara": "Quinara",
+      "tombali": "Tombali"
+    },
+    "linguas_casa": {
+      "portugues": "Português",
+      "crioulo": "Crioulo",
+      "fula": "Fula",
+      "balanta": "Balanta",
+      "mandinga": "Mandinga",
+      "manjaco": "Manjaco",
+      "pepel": "Pepel",
+      "mancanha": "Mancanha",
+      "bijago": "Bijagó",
+      "felupe": "Felupe",
+      "nalu": "Nalu",
+      "biafada": "Biafada",
+      "padjadinca": "Padjadinca",
+      "outra": "Outra (especifica:)"
+    },
+    "portugues_casa": {
+      "falo_sempre_em_casa": "Falo sempre em casa.",
+      "as_vezes_falo_em_casa": "As vezes falo em casa.",
+      "as_vezes_falo_portugues_e_outra_lingua_em_casa": "Às vezes falo português e outra língua em casa.",
+      "nunca_falo_portugues_em_casa": "Nunca falo português em casa."
+    },
+    "telefone": {
+      "sim": "Sim",
+      "nao": "Não"
+    },
+    "computador_tablet": {
+      "sim": "Sim",
+      "nao": "Não"
+    },
+    "livros": {
+      "nao_temos_livros_em_casa": "Não temos livros em casa.",
+      "temos_alguns_livros_em_casa_de_1_a_10_livros": "Temos alguns livros em casa (de 1 a 10 livros).",
+      "temos_varios_livros_em_casa_11_a_25_livros": "Temos vários livros em casa (11 a 25 livros).",
+      "temos_muitos_livros_em_minha_casa_26_livros_ou_mais": "Temos muitos livros em minha casa (26 livros ou mais)."
+    },
+    "pais_leem": {
+      "sim": "Sim",
+      "nao": "Não"
+    }
+  },
+  "Professores": {
+    "sexo": {
+      "feminino": "Feminino",
+      "masculino": "Masculino",
+      "prefiro_nao_responder": "Prefiro não responder"
+    },
+    "regiao": {
+      "bissau": "Bissau",
+      "bafata": "Bafatá",
+      "biombo": "Biombo",
+      "bolama_bijagos": "Bolama/Bijagós",
+      "cacheu": "Cacheu",
+      "gabu": "Gabú",
+      "oio": "Oio",
+      "quinara": "Quinara",
+      "tombali": "Tombali"
+    },
+    "anos_lecionados": {
+      "1_ano": "1.º Ano",
+      "2_ano": "2.º Ano",
+      "3_ano": "3.º Ano",
+      "4_ano": "4.º Ano",
+      "5_ano": "5.º Ano",
+      "6_ano": "6.º Ano"
+    },
+    "lingua_ensino": {
+      "portugues": "Português",
+      "crioulo": "Crioulo",
+      "lingua_local": "Língua local",
+      "portugues_e_crioulo": "Português e Crioulo",
+      "portugues_e_lingua_local": "Português e Língua local",
+      "outra": "Outra (especifique)"
+    },
+    "qualificacao": {
+      "fim_do_1_ciclo_do_ensino_basico": "Fim do 1º Ciclo do Ensino Básico",
+      "fim_do_2_ciclo_do_ensino_basico": "Fim do 2º Ciclo do Ensino Básico",
+      "fim_do_3_ciclo_do_ensino_basico": "Fim do 3º Ciclo do Ensino Básico",
+      "fim_do_ensino_secundario": "Fim do Ensino Secundário",
+      "bacharelado": "Bacharelado",
+      "licenciatura": "Licenciatura",
+      "mestrado": "Mestrado",
+      "doutoramento": "Doutoramento"
+    },
+    "diploma": {
+      "sim": "Sim",
+      "nao": "Não"
+    },
+    "assiduidade": {
+      "uma_vez_por_semana": "Uma vez por semana.",
+      "uma_vez_a_cada_duas_semana": "Uma vez a cada duas semana.",
+      "uma_vez_por_mes": "Uma vez por mês.",
+      "uma_vez_a_cada_dois_meses": "Uma vez a cada dois meses.",
+      "nunca_ou_quase_nunca": "Nunca ou quase nunca."
+    },
+    "manuais": {
+      "sim_todos_os_alunos_receberam_um_manual": "Sim, todos os alunos receberam um manual",
+      "sim_mas_apenas_alguns_alunos_receberam_um_manual": "Sim, mas apenas alguns alunos receberam um manual",
+      "nao": "Não"
+    },
+    "guia": {
+      "sim": "Sim",
+      "nao": "Não"
+    },
+    "formacao_recente": {
+      "sim": "Sim",
+      "nao": "Não"
+    },
+    "formacoes": {
+      "estagio_pedagogico": "Estágio pedagógico",
+      "seminario_de_formacao_do_ministerio": "Seminário de formação do Ministério",
+      "unidade_de_animacao_pedagogica_uap": "Unidade de Animação Pedagógica (UAP)",
+      "formacao_organizada_pela_comes": "Formação organizada pela COMES",
+      "formacao_em_metodos_de_ensino_da_leitura_literacia": "Formação em métodos de ensino da leitura/literacia",
+      "formacao_em_tecnologia_no_ensino": "Formação em tecnologia no ensino",
+      "outra": "Outra (especifique)",
+      "outra_formacao": "Outra formação (adicionar)"
+    },
+    "conhece_aplicativo": {
+      "sim": "Sim",
+      "nao": "Não"
+    },
+    "frequencia_aplicativo": {
+      "todos_os_dias_ou_quase_todos_os_dias": "Todos os dias ou quase todos os dias",
+      "varias_vezes_por_semana": "Várias vezes por semana",
+      "algumas_vezes_por_mes": "Algumas vezes por mês",
+      "raramente": "Raramente",
+      "nunca_conheco_mas_nao_utilizo": "Nunca — conheço mas não utilizo"
+    }
+  }
+}
