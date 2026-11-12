@@ -19,13 +19,14 @@ DESCRIPTIONS = {
     "Cobertura da amostra": "Acompanha as 20 escolas selecionadas por unidade e instrumento. A tabela ajuda a identificar onde já há recolha e onde ainda faltam submissões.",
     "Prática": "Verifica a completude dos exercícios, a distribuição das pontuações e os itens com mais erros ou omissões.",
     "Avaliação principal": "Consulta os resultados globais, por escola, por secção e por item. Usa a região e a escola para examinar padrões dentro da amostra.",
-    "Questionários": "Explora o perfil dos alunos e dos professores com base nas respostas recebidas.",
+    "Questionário dos alunos": "Perfil dos alunos, línguas e recursos de aprendizagem em casa.",
+    "Questionário dos professores": "Perfil, experiência, formação e recursos pedagógicos dos professores.",
     "Qualidade": "Identifica códigos em falta, submissões repetidas e registos que precisam de ser reconciliados com a amostra.",
 }
 
 ICONS = {"Visão geral": "dashboard", "Cobertura da amostra": "location_on",
          "Prática": "edit_note", "Avaliação principal": "bar_chart",
-         "Questionários": "assignment", "Qualidade": "fact_check"}
+         "Questionário dos alunos": "school", "Questionário dos professores": "groups", "Qualidade": "fact_check"}
 
 STYLE = """
 <style>
@@ -36,7 +37,12 @@ STYLE = """
 [data-testid="stSidebar"] .st-key-aqa_nav [data-testid="stVerticalBlock"] {gap:.25rem;}
 [data-testid="stSidebar"] .st-key-aqa_nav button {
   justify-content:flex-start; border-radius:.65rem; padding:.65rem .8rem;
-  min-height:2.75rem; text-align:left;
+  min-height:2.75rem; text-align:left; width:100%;
+}
+[data-testid="stSidebar"] .st-key-aqa_nav button > div {
+  flex:0 1 auto; justify-content:flex-start; text-align:left; margin-inline-start:0;
+}
+[data-testid="stSidebar"] .st-key-aqa_nav button p {text-align:left; margin:0;
 }
 [data-testid="stSidebar"] .st-key-aqa_nav button[kind="tertiary"] {color:#16486b;}
 [data-testid="stSidebar"] .st-key-aqa_nav button[kind="primary"] {
@@ -66,11 +72,11 @@ STYLE = """
 
 def navigation(root: Path):
     st.markdown(STYLE, unsafe_allow_html=True)
-    if "aqa_page" not in st.session_state:
+    if st.session_state.get("aqa_page") not in DESCRIPTIONS:
         st.session_state.aqa_page = "Visão geral"
     page = st.session_state.aqa_page
     with st.sidebar:
-        st.image(str(root / "logo.png"), width="stretch")
+        st.image(str(root / "logo_pch.png"), width=72)
         st.markdown("**AQA4 · PCH**")
         st.caption("Painel de acompanhamento")
         st.divider()
@@ -82,6 +88,7 @@ def navigation(root: Path):
                           args=("aqa_page", name))
         st.divider()
         update = st.button("Atualizar do Kobo", icon=":material/refresh:", width="stretch")
+    st.image(str(root / "logo.png"), width=520)
     st.title("Seguimento do piloto AQA4" if page == "Visão geral" else page)
     return page, update
 
@@ -117,11 +124,15 @@ def filter_analysis(data, plan, page):
 PRACTICE = "Prática"
 TEST = "Avaliação principal"
 PROFILES = {
-    "Alunos": {"idade": "Idade", "sexo": "Sexo", "linguas_casa": "Línguas em casa",
-               "portugues_casa": "Português em casa", "livros": "Livros em casa"},
-    "Professores": {"anos_docencia": "Anos de docência", "qualificacao": "Qualificação",
-                   "lingua_ensino": "Língua de ensino", "formacao_recente": "Formação recente",
-                   "conhece_aplicativo": "Conhece o aplicativo"},
+    "Alunos": {"idade": "Idade", "sexo": "Sexo", "regiao": "Região declarada", "linguas_casa": "Línguas em casa",
+               "portugues_casa": "Português em casa", "telefone": "Telefone", "computador_tablet": "Computador ou tablet",
+               "livros": "Livros em casa", "pais_leem": "Leitura pelos pais"},
+    "Professores": {"sexo": "Sexo", "ano_nascimento": "Ano de nascimento", "regiao": "Região declarada",
+                   "anos_docencia": "Anos de docência", "anos_lecionados": "Anos de escolaridade lecionados",
+                   "qualificacao": "Qualificação", "lingua_ensino": "Língua de ensino", "diploma": "Diploma",
+                   "assiduidade": "Assiduidade", "manuais": "Manuais", "guia": "Guia do professor",
+                   "formacao_recente": "Formação recente", "formacoes": "Formações realizadas",
+                   "conhece_aplicativo": "Conhece o aplicativo", "frequencia_aplicativo": "Frequência de uso do aplicativo"},
 }
 
 
@@ -266,23 +277,45 @@ def analysis(data, form, error):
     st.caption("O denominador por item inclui omissões classificáveis. Itens sem chave e registos sem correção ficam fora da taxa. As faixas do gráfico são descritivas.")
 
 
-def profiles(data, labels):
-    for form, fields in PROFILES.items():
-        st.subheader(form)
-        subset = data[data["Instrumento"].eq(form)]
-        if form == "Alunos":
-            subset = latest_student_records(subset)
-        if subset.empty:
-            st.info("Sem registos nos filtros selecionados.")
-            continue
-        selected = st.selectbox("Indicador", list(fields), format_func=fields.get, key=form)
-        values = subset[selected].replace("", pd.NA).dropna()
-        if selected == "linguas_casa":
-            values = values.str.split().explode()
-        display = values.map(lambda value: labels.get(form, {}).get(selected, {}).get(value, value))
-        st.caption(f"{len(subset)} registos. {int(subset[selected].eq('').sum())} sem resposta. A pergunta de línguas aceita várias opções.")
-        if not display.empty:
-            st.bar_chart(display.value_counts().rename("Respostas"))
+def profiles(data, form, labels, error):
+    if error:
+        return
+    subset = data[data["Instrumento"].eq(form)]
+    if form == "Alunos":
+        subset = latest_student_records(subset)
+    if subset.empty:
+        st.info("Sem registos nos filtros selecionados.")
+        return
+    st.metric("Registos analisados", len(subset))
+    multi = {"linguas_casa", "anos_lecionados", "formacoes"}
+    fields = list(PROFILES[form].items())
+    for start in range(0, len(fields), 2):
+        columns = st.columns(2)
+        for column, (field, title) in zip(columns, fields[start:start + 2]):
+            with column:
+                with st.container(border=True):
+                    st.subheader(title)
+                    values = subset[field].replace("", pd.NA).dropna()
+                    answered = len(values)
+                    st.caption(f"{answered} de {len(subset)} responderam")
+                    if not answered:
+                        st.write("Sem respostas registadas.")
+                        continue
+                    if field in {"idade", "ano_nascimento", "anos_docencia"}:
+                        numeric = pd.to_numeric(values, errors="coerce").dropna()
+                        if not numeric.empty:
+                            st.write(f"Mediana: {numeric.median():g} · Mínimo: {numeric.min():g} · Máximo: {numeric.max():g}")
+                    if field in multi:
+                        values = values.map(lambda value: list(dict.fromkeys(value.split()))).explode().dropna()
+                        st.caption("Seleção múltipla. As percentagens podem somar mais de 100%.")
+                    counts = values.value_counts()
+                    lookup = labels.get(field, {})
+                    table = counts.rename_axis("Código").reset_index(name="Respostas")
+                    table["Resposta"] = table["Código"].map(lambda code: lookup.get(code, code))
+                    table["Percentagem"] = (100 * table["Respostas"] / answered).round(1)
+                    st.dataframe(table[["Resposta", "Respostas", "Percentagem"]], hide_index=True,
+                                 column_config={"Percentagem": st.column_config.ProgressColumn(
+                                     "% de respondentes", min_value=0, max_value=100, format="%.1f%%")})
 
 
 def quality(data, forms, errors, registry):
@@ -417,7 +450,7 @@ def load_school_reference(path):
 
 
 def main():
-    st.set_page_config(page_title="AQA4 | Seguimento do piloto", page_icon=str(ROOT / "logo.png"), layout="wide")
+    st.set_page_config(page_title="AQA4 | Seguimento do piloto", page_icon=str(ROOT / "logo_pch.png"), layout="wide")
     page, update = navigation(ROOT)
     token = os.environ.get("KOBO_API_TOKEN")
     if not token:
@@ -492,8 +525,10 @@ def main():
         coverage(data, plan, FORMS, errors)
     elif page in (PRACTICE, TEST):
         analysis(data, page, errors.get(page))
-    elif page == "Questionários":
-        profiles(data, json.loads((ROOT / "rotulos.json").read_text(encoding="utf-8")))
+    elif page in ("Questionário dos alunos", "Questionário dos professores"):
+        form = "Alunos" if page == "Questionário dos alunos" else "Professores"
+        labels = json.loads((ROOT / "rotulos.json").read_text(encoding="utf-8"))
+        profiles(data, form, labels.get(form, {}), errors.get(form))
     else:
         registry = load_school_reference(ROOT / "referencia_escolas.json")
         if not registry:
